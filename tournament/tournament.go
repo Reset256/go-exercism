@@ -46,6 +46,7 @@ func Tally(reader io.Reader, writer io.Writer) error {
 	for k := range table {
 		keys = append(keys, k)
 	}
+	// TODO sort first by points, then by name
 	sort.Strings(keys)
 	fmt.Printf("%v\n", table)
 	result := "Team                           | MP |  W |  D |  L |  P\n"
