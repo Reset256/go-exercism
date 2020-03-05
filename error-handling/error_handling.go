@@ -1,35 +1,30 @@
 package erratum
 
-import (
-	"fmt"
-	"reflect"
-)
-
-func Use(opener func() (Resource, error), h string) error {
-	var resource Resource
+func Use(o ResourceOpener, input string) (result error) {
+	var r Resource
 	var err error
 
-	for {
-		fmt.Println("Before opener()")
-		resource, err = opener()
-		fmt.Println("After opener(), before reflect")
-		if reflect.TypeOf(err) != reflect.TypeOf(TransientError{}) {
-			break
+	if r, err = o(); err != nil {
+		if _, ok := err.(TransientError); ok {
+			return Use(o, input)
 		}
+		return err
 	}
-
-
-	resource.Frob(h)
+	defer r.Close()
 
 	defer func() {
-		fmt.Println("Before recover")
-		if r := recover(); r != nil {
-			if reflect.TypeOf(err) != reflect.TypeOf(FrobError{}) {
-				resource.Defrob(h)
+		if recover := recover(); recover != nil {
+			if frob, ok := recover.(FrobError); ok {
+				r.Defrob(frob.defrobTag)
+			}
+
+			if recoverError, ok := recover.(error); ok {
+				result = recoverError
 			}
 		}
-		fmt.Println("After recover")
+
 	}()
-	err = resource.Close()
-	return err
+
+	r.Frob(input)
+	return result
 }

@@ -6,10 +6,13 @@ type Domino [2]int
 
 func MakeChain(dominoes []Domino) ([]Domino, bool) {
 
-	if len(dominoes) == 0 {
+	fmt.Println("beginning - ", dominoes)
+
+	inputLength := len(dominoes)
+	if inputLength == 0 {
 		return dominoes, true
 	}
-	if  len(dominoes) == 1 {
+	if inputLength == 1 {
 		if dominoes[0][0] == dominoes[0][1] {
 			return dominoes, true
 		} else {
@@ -26,33 +29,37 @@ func MakeChain(dominoes []Domino) ([]Domino, bool) {
 		resultMap[value[1]] = resultMap[value[1]] + 1
 	}
 
-	fmt.Println(dominoes, resultMap)
+	checkForMoreOccurence := false
 
 	for _, value := range resultMap {
-		if value != 2 {
+		if value%2 != 0 {
 			return nil, false
+		}
+		if value != 2 {
+			checkForMoreOccurence = true
 		}
 	}
 
-
-	resultDominoes := make([]Domino, len(dominoes))
+	resultDominoes := make([]Domino, 1)
 	resultDominoes[0] = dominoes[0]
-	dominoes = removeDomino(dominoes, 0)
+	dominoes = RemoveDomino(dominoes, 0)
 	currentNumberToFind := resultDominoes[0][1]
+	fmt.Println("current result - ", resultDominoes, "input - ", dominoes, "to find - ", currentNumberToFind, "check for more occurencies - ", checkForMoreOccurence)
 
-	for i := 1; i < len(dominoes); i++ {
+	for i := 1; i < inputLength; i++ {
 		var removed Domino
-		dominoes, removed, currentNumberToFind = findAndRemove(dominoes, currentNumberToFind)
+		dominoes, removed, currentNumberToFind = FindAndRemove(dominoes, currentNumberToFind, checkForMoreOccurence)
 		if currentNumberToFind == -1 {
 			return nil, false
 		}
 		resultDominoes = append(resultDominoes, removed)
+		fmt.Println("iteration - ", i, "len - ", "current result - ", resultDominoes, "input - ", dominoes, "to find - ", currentNumberToFind)
 	}
+	fmt.Println("\n", "input - ", dominoes)
 	return resultDominoes, true
 }
 
-
-func removeDomino(dominoes []Domino, index int) []Domino {
+func RemoveDomino(dominoes []Domino, index int) []Domino {
 	if index == 0 && len(dominoes) == 1 || len(dominoes) == 0 {
 		return []Domino{}
 	}
@@ -65,22 +72,36 @@ func removeDomino(dominoes []Domino, index int) []Domino {
 	return append(dominoes[0:index], dominoes[index+1:]...)
 }
 
-func findAndRemove(dominoes []Domino, numberToFind int) ([]Domino, Domino, int) {
+func FindAndRemove(dominoes []Domino, numberToFind int, checkForMoreOccurence bool) ([]Domino, Domino, int) {
 	var newNumberToFind = -1
 	var resultDominoes []Domino
 	var removedDomino Domino
 
+	if checkForMoreOccurence {
+		for i, value := range dominoes {
+			if value[0] == numberToFind && value[1] == numberToFind {
+				resultDominoes = RemoveDomino(dominoes, i)
+				return resultDominoes, value, numberToFind
+			}
+		}
+	}
+
 	for i, value := range dominoes {
 		if value[0] == numberToFind || value[1] == numberToFind {
+			resultDominoes = RemoveDomino(dominoes, i)
 			if value[0] == numberToFind {
 				newNumberToFind = value[1]
+				removedDomino = value
 			} else {
 				newNumberToFind = value[0]
+				removedDomino = Flip(value)
 			}
-			resultDominoes = removeDomino(dominoes, i)
-			removedDomino = value
 			break
 		}
 	}
 	return resultDominoes, removedDomino, newNumberToFind
+}
+
+func Flip(domino Domino) Domino {
+	return Domino{domino[1], domino[0]}
 }
